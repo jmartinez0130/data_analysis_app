@@ -15,3 +15,6 @@
   from = "/*"
   to = "/.netlify/functions/streamlit_app"
   status = 200
+
+[build.environment]
+  PYTHON_VERSION = "3.8"
