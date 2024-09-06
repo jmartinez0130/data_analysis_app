@@ -168,237 +168,232 @@ def trends_seasonality_analysis(df):
         st.pyplot(fig)
     else:
         st.warning("No date columns found in the dataset. Trends and seasonality analysis cannot be performed.")
-
-
-# Title and Introduction
-st.title('Interactive EDA for Air Pollution Data 🌍💨')
-st.write("""
-Welcome to the **Interactive EDA Application** for Air Pollution Data. This tool helps you:
-- Upload your air pollution dataset (CSV)
-- Explore, clean, and preprocess your data
-- Visualize relationships, detect outliers, and generate correlation plots
-- Train basic machine learning models on air pollution data
-- Analyze trends and seasonality in your data
-Use the sidebar to navigate through different features.
-""")
-
-# Sidebar - Action Selection
-st.sidebar.title('📋 Actions')
-
-# Sidebar - Step 1: Upload Data or Use Sample Dataset
-st.sidebar.header("📂 Step 1: Upload Data")
-use_sample = st.sidebar.checkbox("Use Sample Air Pollution Data")
-data = st.sidebar.file_uploader("Upload your CSV file", type=['csv'])
-
-if use_sample:
-    df = create_dummy_air_pollution_data()
-    st.success("Sample air pollution dataset loaded.")
-else:
-    if data is not None:
-        df = pd.read_csv(data)
-        st.success("File uploaded successfully.")
-    else:
-        st.warning("Please upload a CSV file or use the sample data to proceed.")
-        df = None
-
-# Ensure Data is Available for Analysis
-if df is not None:
-    st.write("### Preview of the Dataset")
-    st.write(df.head())
-
-    # Interactive Data Filtering
-    with st.sidebar:
-        df_filtered = interactive_data_filter(df)
-
-    # Use Tabs for Easy Navigation between Different Sections
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Data Overview", "Data Cleaning", "Visualizations", "Correlation Plot", "Outlier Detection", "Machine Learning"])
-
-    # Tab 1: Data Overview
-    with tab1:
-        st.header("📊 Data Overview")
-        display_summary_statistics(df_filtered)
-        data_quality_checks(df_filtered)
-
-    # Tab 2: Data Cleaning
-    with tab2:
-        st.header("🧹 Data Cleaning")
-
-        # Drop Columns
-        st.subheader("Drop Columns")
-        columns_to_drop = st.multiselect("Select columns to drop", df_filtered.columns)
-        if columns_to_drop:
-            df_filtered.drop(columns=columns_to_drop, axis=1, inplace=True)
-            st.write("### Data after Dropping Columns")
-            st.write(df_filtered.head())
-
-        # Rename Columns
-        st.subheader("Rename Columns")
-        columns_to_rename = st.multiselect("Select columns to rename", df_filtered.columns)
-        new_names = st.text_input("Enter new names (comma-separated) for the selected columns")
-        if columns_to_rename and new_names:
-            new_names_list = new_names.split(',')
-            df_filtered.rename(columns=dict(zip(columns_to_rename, new_names_list)), inplace=True)
-            st.write("### Data after Renaming Columns")
-            st.write(df_filtered.head())
-
-        # Change Data Types
-        st.subheader("Change Data Types")
-        columns_to_change_type = st.multiselect("Select columns to change data type", df_filtered.columns)
-        new_type = st.selectbox("Select the new data type", ('int64', 'float64', 'object'))
-        if columns_to_change_type:
-            df_filtered[columns_to_change_type] = df_filtered[columns_to_change_type].astype(new_type)
-            st.write("### Data after Changing Data Type")
-            st.write(df_filtered.head())
-
-        # Handle Missing Values
-        st.subheader("Handle Missing Values")
-        columns_to_impute = st.multiselect("Select columns to impute missing values", df_filtered.columns)
-        impute_method = st.selectbox('Select the imputation method', ['Linear Interpolation', 'Mean Imputation', 'Median Imputation'])
-        if columns_to_impute:
-            if impute_method == 'Linear Interpolation':
-                df_filtered[columns_to_impute] = df_filtered[columns_to_impute].interpolate(method='linear')
-            elif impute_method == 'Mean Imputation':
-                imputer = SimpleImputer(strategy='mean')
-                df_filtered[columns_to_impute] = imputer.fit_transform(df_filtered[columns_to_impute])
-            elif impute_method == 'Median Imputation':
-                imputer = SimpleImputer(strategy='median')
-                df_filtered[columns_to_impute] = imputer.fit_transform(df_filtered[columns_to_impute])
-            st.write("### Data after Imputation")
-            st.write(df_filtered.head())
-
-        st.markdown(download_csv(df_filtered, "cleaned_data.csv"), unsafe_allow_html=True)
-
-    # Tab 3: Data Visualizations
-    with tab3:
-        st.header("📊 Data Visualizations")
-
-        # Time-Series Plots for Air Pollution Data
-        st.subheader("Time-Series Visualization")
-        time_series_var = st.selectbox("Select variable for time-series plot", df_filtered.select_dtypes(include=['float64', 'int64']).columns)
-        time_chart = px.line(df_filtered, x='Date', y=time_series_var, title=f"Time-Series of {time_series_var}")
-        st.plotly_chart(time_chart)
-
-        # Download Plot
-        st.markdown(download_figure(time_chart, f"time_series_{time_series_var}.png"), unsafe_allow_html=True)
-
-        # Other Visualization Options
-        st.subheader("Generate Other Interactive Plots")
-        x_axis = st.selectbox("Select X axis", df_filtered.columns)
-        y_axis = st.selectbox("Select Y axis", df_filtered.columns)
-        plot_type = st.selectbox("Select Plot Type", ['Scatter Plot', 'Line Chart', 'Bar Chart', 'Histogram'])
         
-        if st.button("Generate Plot"):
-            st.write(f"### {plot_type} for {x_axis} vs {y_axis}")
-            if plot_type == 'Scatter Plot':
-                fig = px.scatter(df_filtered, x=x_axis, y=y_axis)
-            elif plot_type == 'Line Chart':
-                fig = px.line(df_filtered, x=x_axis, y=y_axis)
-            elif plot_type == 'Bar Chart':
-                fig = px.bar(df_filtered, x=x_axis, y=y_axis)
-            elif plot_type == 'Histogram':
-                fig = px.histogram(df_filtered, x=x_axis, y=y_axis)
-            st.plotly_chart(fig)
+def main():
+    st.set_page_config(page_title="Air Pollution Data Analysis", layout="wide")
 
-            # Download Plot
-            st.markdown(download_figure(fig, f"{plot_type.lower()}_{x_axis}_vs_{y_axis}.png"), unsafe_allow_html=True)
-
-    # Tab 4: Correlation Plot
-    with tab4:
-        st.header("📈 Correlation Plot")
-
-        st.subheader("Generate Correlation Heatmap")
-        corr = df_filtered.corr()
-        fig, ax = plt.subplots(figsize=(10, 8))
-        sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
-        st.pyplot(fig)
-
-        # Download correlation matrix
-        st.markdown(download_csv(corr, "correlation_matrix.csv"), unsafe_allow_html=True)
-
-    # Tab 5: Outlier Detection
-    
-    with tab5:
-        st.header("🚨 Outlier Detection")
-
-    # Info about Outlier Detection Methods
-    st.info("""
-    **Outlier Detection Methods**:
-    - **Isolation Forest**: Detects outliers by isolating anomalies through random partitioning of data points.
-    - **Z-score**: Measures how many standard deviations a data point is from the mean; values beyond a threshold (e.g., 3) are considered outliers.
+    st.title('Interactive EDA for Air Pollution Data 🌍💨')
+    st.write("""
+    Welcome to the **Interactive EDA Application** for Air Pollution Data. This tool helps you:
+    - Upload your air pollution dataset (CSV)
+    - Explore, clean, and preprocess your data
+    - Visualize relationships, detect outliers, and generate correlation plots
+    - Train basic machine learning models on air pollution data
+    - Analyze trends and seasonality in your data
+    Use the sidebar to navigate through different features.
     """)
 
-    # Detect Outliers in Selected Columns
-    columns_to_find_outliers = st.multiselect("Select columns for outlier detection", df_filtered.columns, key="outlier_columns")
-    outlier_method = st.selectbox("Select Outlier Detection Method", ['Isolation Forest', 'Z-score'], key="outlier_method")
-    
-    if st.button("Find Outliers"):
-        if len(columns_to_find_outliers) < 2:
-            st.warning("Please select at least two columns for outlier detection.")
+    # Sidebar - Action Selection
+    st.sidebar.title('📋 Actions')
+
+    # Sidebar - Step 1: Upload Data or Use Sample Dataset
+    st.sidebar.header("📂 Step 1: Upload Data")
+    use_sample = st.sidebar.checkbox("Use Sample Air Pollution Data")
+    data = st.sidebar.file_uploader("Upload your CSV file", type=['csv'])
+
+    if use_sample:
+        df = create_dummy_air_pollution_data()
+        st.success("Sample air pollution dataset loaded.")
+    else:
+        if data is not None:
+            df = pd.read_csv(data)
+            st.success("File uploaded successfully.")
         else:
-            if outlier_method == 'Isolation Forest':
-                iso_forest = IsolationForest(contamination='auto')
-                outliers = iso_forest.fit_predict(df_filtered[columns_to_find_outliers])
-                df_filtered['Outlier'] = outliers
-                st.write("### Detected Outliers")
-                st.write(df_filtered[df_filtered['Outlier'] == -1])  # Display outliers
+            st.warning("Please upload a CSV file or use the sample data to proceed.")
+            df = None
 
-                # Visualize Outliers
-                fig = px.scatter(df_filtered, x=columns_to_find_outliers[0], y=columns_to_find_outliers[1], color=df_filtered['Outlier'].astype(str))
+    # Ensure Data is Available for Analysis
+    if df is not None:
+        st.write("### Preview of the Dataset")
+        st.write(df.head())
+
+        # Interactive Data Filtering
+        with st.sidebar:
+            df_filtered = interactive_data_filter(df)
+
+        # Use Tabs for Easy Navigation between Different Sections
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Data Overview", "Data Cleaning", "Visualizations", "Correlation Plot", "Outlier Detection", "Machine Learning"])
+
+        # Tab 1: Data Overview
+        with tab1:
+            st.header("📊 Data Overview")
+            display_summary_statistics(df_filtered)
+            data_quality_checks(df_filtered)
+
+        # Tab 2: Data Cleaning
+        with tab2:
+            st.header("🧹 Data Cleaning")
+
+            # Drop Columns
+            st.subheader("Drop Columns")
+            columns_to_drop = st.multiselect("Select columns to drop", df_filtered.columns)
+            if columns_to_drop:
+                df_filtered.drop(columns=columns_to_drop, axis=1, inplace=True)
+                st.write("### Data after Dropping Columns")
+                st.write(df_filtered.head())
+
+            # Rename Columns
+            st.subheader("Rename Columns")
+            columns_to_rename = st.multiselect("Select columns to rename", df_filtered.columns)
+            new_names = st.text_input("Enter new names (comma-separated) for the selected columns")
+            if columns_to_rename and new_names:
+                new_names_list = new_names.split(',')
+                df_filtered.rename(columns=dict(zip(columns_to_rename, new_names_list)), inplace=True)
+                st.write("### Data after Renaming Columns")
+                st.write(df_filtered.head())
+
+            # Change Data Types
+            st.subheader("Change Data Types")
+            columns_to_change_type = st.multiselect("Select columns to change data type", df_filtered.columns)
+            new_type = st.selectbox("Select the new data type", ('int64', 'float64', 'object'))
+            if columns_to_change_type:
+                df_filtered[columns_to_change_type] = df_filtered[columns_to_change_type].astype(new_type)
+                st.write("### Data after Changing Data Type")
+                st.write(df_filtered.head())
+
+            # Handle Missing Values
+            st.subheader("Handle Missing Values")
+            columns_to_impute = st.multiselect("Select columns to impute missing values", df_filtered.columns)
+            impute_method = st.selectbox('Select the imputation method', ['Linear Interpolation', 'Mean Imputation', 'Median Imputation'])
+            if columns_to_impute:
+                if impute_method == 'Linear Interpolation':
+                    df_filtered[columns_to_impute] = df_filtered[columns_to_impute].interpolate(method='linear')
+                elif impute_method == 'Mean Imputation':
+                    imputer = SimpleImputer(strategy='mean')
+                    df_filtered[columns_to_impute] = imputer.fit_transform(df_filtered[columns_to_impute])
+                elif impute_method == 'Median Imputation':
+                    imputer = SimpleImputer(strategy='median')
+                    df_filtered[columns_to_impute] = imputer.fit_transform(df_filtered[columns_to_impute])
+                st.write("### Data after Imputation")
+                st.write(df_filtered.head())
+
+            st.markdown(download_csv(df_filtered, "cleaned_data.csv"), unsafe_allow_html=True)
+
+        # Tab 3: Data Visualizations
+        with tab3:
+            st.header("📊 Data Visualizations")
+
+            # Time-Series Plots for Air Pollution Data
+            st.subheader("Time-Series Visualization")
+            time_series_var = st.selectbox("Select variable for time-series plot", df_filtered.select_dtypes(include=['float64', 'int64']).columns)
+            time_chart = px.line(df_filtered, x='Date', y=time_series_var, title=f"Time-Series of {time_series_var}")
+            st.plotly_chart(time_chart)
+
+            # Download Plot
+            st.markdown(download_figure(time_chart, f"time_series_{time_series_var}.png"), unsafe_allow_html=True)
+
+            # Other Visualization Options
+            st.subheader("Generate Other Interactive Plots")
+            x_axis = st.selectbox("Select X axis", df_filtered.columns)
+            y_axis = st.selectbox("Select Y axis", df_filtered.columns)
+            plot_type = st.selectbox("Select Plot Type", ['Scatter Plot', 'Line Chart', 'Bar Chart', 'Histogram'])
+            
+            if st.button("Generate Plot"):
+                st.write(f"### {plot_type} for {x_axis} vs {y_axis}")
+                if plot_type == 'Scatter Plot':
+                    fig = px.scatter(df_filtered, x=x_axis, y=y_axis)
+                elif plot_type == 'Line Chart':
+                    fig = px.line(df_filtered, x=x_axis, y=y_axis)
+                elif plot_type == 'Bar Chart':
+                    fig = px.bar(df_filtered, x=x_axis, y=y_axis)
+                elif plot_type == 'Histogram':
+                    fig = px.histogram(df_filtered, x=x_axis, y=y_axis)
                 st.plotly_chart(fig)
 
-                st.markdown(download_csv(df_filtered, "outliers_data.csv"), unsafe_allow_html=True)
+                # Download Plot
+                st.markdown(download_figure(fig, f"{plot_type.lower()}_{x_axis}_vs_{y_axis}.png"), unsafe_allow_html=True)
 
-            elif outlier_method == 'Z-score':
-                z_scores = np.abs(stats.zscore(df_filtered[columns_to_find_outliers]))
-                outliers = (z_scores > 3).any(axis=1)
-                df_filtered['Outlier'] = outliers
-                st.write("### Detected Outliers")
-                st.write(df_filtered[outliers])
+        # Tab 4: Correlation Plot
+        with tab4:
+            st.header("📈 Correlation Plot")
 
-                # Visualize Outliers
-                fig = px.scatter(df_filtered, x=columns_to_find_outliers[0], y=columns_to_find_outliers[1], color=df_filtered['Outlier'].astype(str))
-                st.plotly_chart(fig)
+            st.subheader("Generate Correlation Heatmap")
+            corr = df_filtered.corr()
+            fig, ax = plt.subplots(figsize=(10, 8))
+            sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
+            st.pyplot(fig)
 
-                st.markdown(download_csv(df_filtered, "outliers_data.csv"), unsafe_allow_html=True)
+            # Download correlation matrix
+            st.markdown(download_csv(corr, "correlation_matrix.csv"), unsafe_allow_html=True)
 
-    # Tab 6: Machine Learning
-    with tab6:
-        st.header("📈 Machine Learning")
+        # Tab 5: Outlier Detection
+        with tab5:
+            st.header("🚨 Outlier Detection")
 
-        st.info("""
-        **Machine Learning Models**:
-        - **Linear Regression**: A linear approach to modeling the relationship between a dependent variable and one or more independent variables.
-        - **Ridge Regression**: A variation of linear regression that introduces a regularization term to prevent overfitting by penalizing large coefficients.
-        - **Lasso Regression**: Another regularization method that can shrink coefficients to zero, effectively performing feature selection.
-        """)
+            # Info about Outlier Detection Methods
+            st.info("""
+            **Outlier Detection Methods**:
+            - **Isolation Forest**: Detects outliers by isolating anomalies through random partitioning of data points.
+            - **Z-score**: Measures how many standard deviations a data point is from the mean; values beyond a threshold (e.g., 3) are considered outliers.
+            """)
 
-        # Select Features and Target for Model Training
-        features = st.multiselect("Select Features for Model", df_filtered.columns)
-        target = st.selectbox("Select Target Variable", df_filtered.columns)
-        model_type = st.selectbox("Select Model Type", ['Linear Regression', 'Ridge Regression', 'Lasso Regression'])
-        
-        if st.button("Train Model") and features and target:
-            enhanced_ml_section(df_filtered, features, target, model_type)
+            # Detect Outliers in Selected Columns
+            columns_to_find_outliers = st.multiselect("Select columns for outlier detection", df_filtered.columns, key="outlier_columns")
+            outlier_method = st.selectbox("Select Outlier Detection Method", ['Isolation Forest', 'Z-score'], key="outlier_method")
+            
+            if st.button("Find Outliers"):
+                if len(columns_to_find_outliers) < 2:
+                    st.warning("Please select at least two columns for outlier detection.")
+                else:
+                    if outlier_method == 'Isolation Forest':
+                        iso_forest = IsolationForest(contamination='auto')
+                        outliers = iso_forest.fit_predict(df_filtered[columns_to_find_outliers])
+                        df_filtered['Outlier'] = outliers
+                        st.write("### Detected Outliers")
+                        st.write(df_filtered[df_filtered['Outlier'] == -1])  # Display outliers
 
-    # Trends and Seasonality Analysis
-    with st.expander("Trends and Seasonality Analysis"):
-        trends_seasonality_analysis(df_filtered)
+                        # Visualize Outliers
+                        fig = px.scatter(df_filtered, x=columns_to_find_outliers[0], y=columns_to_find_outliers[1], color=df_filtered['Outlier'].astype(str))
+                        st.plotly_chart(fig)
 
-    # Save Cleaned Data
-    st.sidebar.header("💾 Save Data")
-    if st.sidebar.button("Save Data as CSV"):
-        st.markdown(download_csv(df_filtered, "cleaned_air_pollution_data.csv"), unsafe_allow_html=True)
-        st.success("Data saved as 'cleaned_air_pollution_data.csv'")
+                        st.markdown(download_csv(df_filtered, "outliers_data.csv"), unsafe_allow_html=True)
 
-else:
-    st.info("Please upload a dataset or select the sample dataset to begin analysis.")
+                    elif outlier_method == 'Z-score':
+                        z_scores = np.abs(stats.zscore(df_filtered[columns_to_find_outliers]))
+                        outliers = (z_scores > 3).any(axis=1)
+                        df_filtered['Outlier'] = outliers
+                        st.write("### Detected Outliers")
+                        st.write(df_filtered[outliers])
+
+                        # Visualize Outliers
+                        fig = px.scatter(df_filtered, x=columns_to_find_outliers[0], y=columns_to_find_outliers[1], color=df_filtered['Outlier'].astype(str))
+                        st.plotly_chart(fig)
+
+                        st.markdown(download_csv(df_filtered, "outliers_data.csv"), unsafe_allow_html=True)
+
+        # Tab 6: Machine Learning
+        with tab6:
+            st.header("📈 Machine Learning")
+
+            st.info("""
+            **Machine Learning Models**:
+            - **Linear Regression**: A linear approach to modeling the relationship between a dependent variable and one or more independent variables.
+            - **Ridge Regression**: A variation of linear regression that introduces a regularization term to prevent overfitting by penalizing large coefficients.
+            - **Lasso Regression**: Another regularization method that can shrink coefficients to zero, effectively performing feature selection.
+            """)
+
+            # Select Features and Target for Model Training
+            features = st.multiselect("Select Features for Model", df_filtered.columns)
+            target = st.selectbox("Select Target Variable", df_filtered.columns)
+            model_type = st.selectbox("Select Model Type", ['Linear Regression', 'Ridge Regression', 'Lasso Regression'])
+            
+            if st.button("Train Model") and features and target:
+                enhanced_ml_section(df_filtered, features, target, model_type)
+
+        # Trends and Seasonality Analysis
+        with st.expander("Trends and Seasonality Analysis"):
+            trends_seasonality_analysis(df_filtered)
+
+        # Save Cleaned Data
+        st.sidebar.header("💾 Save Data")
+        if st.sidebar.button("Save Data as CSV"):
+            st.markdown(download_csv(df_filtered, "cleaned_air_pollution_data.csv"), unsafe_allow_html=True)
+            st.success("Data saved as 'cleaned_air_pollution_data.csv'")
+
+    else:
+        st.info("Please upload a dataset or select the sample dataset to begin analysis.")
 
 if __name__ == "__main__":
     import warnings
     warnings.filterwarnings("ignore")
-    import streamlit as st
-    st.set_page_config(page_title="My Streamlit App")
-    # Your main app code here, if it's not already in a function or the global scope
-else:
-    import warnings
-    warnings.filterwarnings("ignore")
+    main()
