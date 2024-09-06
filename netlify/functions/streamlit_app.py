@@ -1,5 +1,5 @@
-from streamlit.web.bootstrap import run
 import streamlit as st
+from streamlit.web.bootstrap import run
 
 def handler(event, context):
     return run(
