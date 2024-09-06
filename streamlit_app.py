@@ -61,7 +61,7 @@ def data_quality_checks(df):
     # Check for missing values
     missing_values = df.isnull().sum()
     st.write("Missing Values:")
-    st.write(missing_values)
+    st.write(missing_values.to_frame().astype(str))  # Convert to string
     
     # Check for duplicates
     duplicates = df.duplicated().sum()
@@ -69,7 +69,19 @@ def data_quality_checks(df):
     
     # Check data types
     st.write("Data Types:")
-    st.write(df.dtypes)
+    dtypes = df.dtypes.astype(str)  # Convert dtypes to strings
+    st.write(dtypes.to_frame().astype(str))  # Display as a DataFrame of strings
+
+    # Handle datetime columns separately
+    date_columns = df.select_dtypes(include=['datetime64']).columns
+    if len(date_columns) > 0:
+        st.write("Datetime Columns:")
+        for col in date_columns:
+            st.write(f"{col}: {df[col].dtype}")
+
+    # Display a sample of the data
+    st.write("Sample Data:")
+    st.write(df.head().astype(str))  # Convert to string for display
 
 # Function for interactive data filtering
 def interactive_data_filter(df):
