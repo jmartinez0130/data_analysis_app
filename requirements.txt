@@ -1,6 +1,6 @@
 streamlit==1.25.0
-pandas==1.5.3   # Using a more stable version
-numpy==1.21.6   # Compatible with pandas 1.5.3
+pandas==1.5.3    # Stable version compatible with numpy
+numpy==1.23.5    # Compatible with pandas and avoids build issues
 scikit-learn==1.3.0
 seaborn==0.12.2
 matplotlib==3.7.2
