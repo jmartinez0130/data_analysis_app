@@ -1,8 +1,17 @@
 [build]
-  command = "pip install -r requirements.txt"
+  command = """
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    mkdir -p netlify/functions
+    cp streamlit_app.py netlify/functions/
+  """
   functions = "netlify/functions"
+  publish = "public"
+
+[functions]
+  directory = "netlify/functions"
 
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/streamlit"
+  to = "/.netlify/functions/streamlit_app"
   status = 200
