@@ -1,6 +1,5 @@
-import streamlit as st
 from streamlit.web.bootstrap import run
-import streamlit_app  # This imports your main app file
+import streamlit as st
 
 def handler(event, context):
-    run(streamlit_app, flag_options={"server.headless": True})
+    return run(lambda: st.set_page_config(page_title="My Streamlit App") or exec(open('streamlit_app.py').read()), flag_options={"server.address": "0.0.0.0", "server.headless": True})
