@@ -396,3 +396,9 @@ else:
 if __name__ == "__main__":
     import warnings
     warnings.filterwarnings("ignore")
+    import streamlit as st
+    st.set_page_config(page_title="My Streamlit App")
+    # Your main app code here, if it's not already in a function or the global scope
+else:
+    import warnings
+    warnings.filterwarnings("ignore")
